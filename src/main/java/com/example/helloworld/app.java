@@ -24,6 +24,7 @@ class HelloWorldController {
     public String sayHello() {
     	
     	System.out.println("Hello we are back online");
+    	System.out.println("Hello we are back online2");
     	
         return "Hello, World!";
     }
