@@ -1,5 +1,9 @@
 package com.example.helloworld.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +18,7 @@ import java.util.Map;
 /**
  * Controller for handling bill splitting operations between people
  */
+@Tag(name = "Bill Splitting", description = "APIs for splitting bills and payments between people")
 @RestController
 @RequestMapping("/api/split")
 public class PaymentSplitController {
@@ -46,10 +51,16 @@ public class PaymentSplitController {
      * @param numberOfPeople number of people to split between
      * @return formatted response with split details
      */
+    @Operation(
+        summary = "Split amount equally",
+        description = "Splits a total amount equally between a specified number of people"
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully calculated the split")
+    @ApiResponse(responseCode = "400", description = "Invalid number of people")
     @GetMapping("/equal/{totalAmount}/{numberOfPeople}")
     public ResponseEntity<String> splitEqually(
-            @PathVariable double totalAmount, 
-            @PathVariable int numberOfPeople) {
+            @Parameter(description = "Total amount to split") @PathVariable double totalAmount,
+            @Parameter(description = "Number of people to split between") @PathVariable int numberOfPeople) {
         
         logger.info("Splitting {} equally between {} people", totalAmount, numberOfPeople);
         
@@ -73,11 +84,17 @@ public class PaymentSplitController {
      * @param numberOfPeople number of people to split between
      * @return formatted response with split details including tip
      */
+    @Operation(
+        summary = "Split bill with tip",
+        description = "Splits a bill amount with tip between a specified number of people"
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully calculated the split with tip")
+    @ApiResponse(responseCode = "400", description = "Invalid number of people")
     @GetMapping("/with-tip/{billAmount}/{tipPercentage}/{numberOfPeople}")
     public ResponseEntity<String> splitWithTip(
-            @PathVariable double billAmount,
-            @PathVariable double tipPercentage,
-            @PathVariable int numberOfPeople) {
+            @Parameter(description = "Base bill amount") @PathVariable double billAmount,
+            @Parameter(description = "Tip percentage") @PathVariable double tipPercentage,
+            @Parameter(description = "Number of people") @PathVariable int numberOfPeople) {
         
         logger.info("Splitting bill {} with {}% tip between {} people", 
             billAmount, tipPercentage, numberOfPeople);
@@ -94,12 +111,13 @@ public class PaymentSplitController {
         logger.debug("Calculated values - Tip: {}, Total: {}, Per Person: {}", 
             tipAmount, totalAmount, perPersonAmount);
 
-        return ResponseEntity.ok(String.format(
-            "Bill: " + CURRENCY_FORMAT + "\n" +
-            "Tip (%.1f%%): " + CURRENCY_FORMAT + "\n" +
-            "Total: " + CURRENCY_FORMAT + "\n" +
-            "Per person: " + CURRENCY_FORMAT,
-            billAmount, tipPercentage, tipAmount, totalAmount, perPersonAmount));
+        StringBuilder result = new StringBuilder();
+        result.append(String.format("Bill: " + CURRENCY_FORMAT + "\n"));
+        result.append(String.format("Tip (%.1f%%): " + CURRENCY_FORMAT + "\n", tipPercentage, tipAmount));
+        result.append(String.format("Total: " + CURRENCY_FORMAT + "\n"));
+        result.append(String.format("Per person: " + CURRENCY_FORMAT + "\n", perPersonAmount));
+
+        return ResponseEntity.ok(result.toString());
     }
 
     /**
@@ -108,9 +126,16 @@ public class PaymentSplitController {
      * @param shares map of person name to their percentage share
      * @return formatted response with individual split amounts
      */
+    @Operation(
+        summary = "Split amount unequally",
+        description = "Splits a total amount unequally based on specified percentage shares"
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully calculated the unequal split")
+    @ApiResponse(responseCode = "400", description = "Invalid share percentages")
     @GetMapping("/unequal/{totalAmount}")
     public ResponseEntity<String> splitUnequally(
-            @PathVariable double totalAmount,
+            @Parameter(description = "Total amount to split") @PathVariable double totalAmount,
+            @Parameter(description = "Map of person names to their percentage shares") 
             @RequestParam Map<String, Double> shares) {
         
         logger.info("Splitting {} unequally between {} people", totalAmount, shares.size());
@@ -141,10 +166,19 @@ public class PaymentSplitController {
      * @param tipPercentage optional tip percentage
      * @return formatted response with detailed bill breakdown
      */
+    @Operation(
+        summary = "Split bill by items",
+        description = "Splits a bill by individual items with optional tip between participants"
+    )
+    @ApiResponse(responseCode = "200", description = "Successfully calculated the item-wise split")
+    @ApiResponse(responseCode = "400", description = "Invalid number of participants")
     @GetMapping("/per-item")
     public ResponseEntity<String> splitByItems(
+            @Parameter(description = "Map of item names to their prices") 
             @RequestParam Map<String, Double> items,
+            @Parameter(description = "List of participant names") 
             @RequestParam List<String> participants,
+            @Parameter(description = "Optional tip percentage", example = "15.0") 
             @RequestParam(defaultValue = "0") double tipPercentage) {
         
         logger.info("Splitting bill with {} items between {} people with {}% tip", 
