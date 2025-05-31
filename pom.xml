@@ -12,10 +12,10 @@
     </parent>
     
     <groupId>com.arjunai</groupId>
-    <artifactId>arjunai-projects</artifactId>
+    <artifactId>arjun_ai_project</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ArjunAI Projects</name>
-    <description>Spring Boot application for ArjunAI Projects with mathematical operations and bill splitting functionality</description>
+    <name>Arjun_AI_Project</name>
+    <description>Spring Boot application for Arjun_AI_Project with mathematical operations and bill splitting functionality</description>
     
     <properties>
         <java.version>17</java.version>

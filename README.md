@@ -1,4 +1,4 @@
-# ArjunAI Projects
+# Arjun_AI_Project
 
 A comprehensive Spring Boot application that provides REST APIs for mathematical operations and bill splitting functionality.
 
@@ -32,8 +32,8 @@ A comprehensive Spring Boot application that provides REST APIs for mathematical
 ### Local Development
 1. Clone the repository:
    ```bash
-   git clone https://github.com/arjun-master/arjunai-projects.git
-   cd arjunai-projects
+   git clone https://github.com/arjun-master/arjun_ai_project.git
+   cd arjun_ai_project
    ```
 
 2. Build the application:
