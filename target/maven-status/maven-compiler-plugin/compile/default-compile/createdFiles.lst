@@ -1,2 +1,5 @@
-com/example/helloworld/HelloWorldController.class
+com/example/helloworld/controllers/PaymentSplitController.class
+com/example/helloworld/controllers/HelloWorldController.class
+com/example/helloworld/config/OpenApiConfig.class
 com/example/helloworld/app.class
+com/example/helloworld/controllers/MathOperationsController.class

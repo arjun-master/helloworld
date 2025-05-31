@@ -1,6 +1,6 @@
-# Spring Boot Hello World Application
+# ArjunAI Projects
 
-A Spring Boot application that provides REST APIs for mathematical operations and bill splitting functionality.
+A comprehensive Spring Boot application that provides REST APIs for mathematical operations and bill splitting functionality.
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -32,8 +32,8 @@ A Spring Boot application that provides REST APIs for mathematical operations an
 ### Local Development
 1. Clone the repository:
    ```bash
-   git clone https://github.com/arjun-master/helloworld.git
-   cd helloworld
+   git clone https://github.com/arjun-master/arjunai-projects.git
+   cd arjunai-projects
    ```
 
 2. Build the application:
