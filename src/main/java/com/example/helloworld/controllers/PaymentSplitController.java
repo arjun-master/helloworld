@@ -7,13 +7,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Controller for handling bill splitting operations between people
@@ -72,8 +70,8 @@ public class PaymentSplitController {
         double perPersonAmount = totalAmount / numberOfPeople;
         logger.debug("Per person amount calculated: {}", perPersonAmount);
         
-        return ResponseEntity.ok(String.format("Total amount: " + CURRENCY_FORMAT + 
-            " split between %d people = " + CURRENCY_FORMAT + " per person", 
+        return ResponseEntity.ok(String.format(
+            CURRENCY_FORMAT + " split between %d people = " + CURRENCY_FORMAT + " per person", 
             totalAmount, numberOfPeople, perPersonAmount));
     }
 
@@ -112,9 +110,9 @@ public class PaymentSplitController {
             tipAmount, totalAmount, perPersonAmount);
 
         StringBuilder result = new StringBuilder();
-        result.append(String.format("Bill: " + CURRENCY_FORMAT + "\n"));
+        result.append(String.format("Bill: " + CURRENCY_FORMAT + "\n", billAmount));
         result.append(String.format("Tip (%.1f%%): " + CURRENCY_FORMAT + "\n", tipPercentage, tipAmount));
-        result.append(String.format("Total: " + CURRENCY_FORMAT + "\n"));
+        result.append(String.format("Total: " + CURRENCY_FORMAT + "\n", totalAmount));
         result.append(String.format("Per person: " + CURRENCY_FORMAT + "\n", perPersonAmount));
 
         return ResponseEntity.ok(result.toString());
@@ -136,11 +134,17 @@ public class PaymentSplitController {
     public ResponseEntity<String> splitUnequally(
             @Parameter(description = "Total amount to split") @PathVariable double totalAmount,
             @Parameter(description = "Map of person names to their percentage shares") 
-            @RequestParam Map<String, Double> shares) {
+            @RequestParam Map<String, String> shares) {
         
         logger.info("Splitting {} unequally between {} people", totalAmount, shares.size());
         
-        double totalShares = shares.values().stream().mapToDouble(Double::doubleValue).sum();
+        Map<String, Double> sharePercentages = shares.entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> Double.parseDouble(entry.getValue())
+            ));
+
+        double totalShares = sharePercentages.values().stream().mapToDouble(Double::doubleValue).sum();
         if (Math.abs(totalShares - 100.0) > 0.01) {
             logger.error("Invalid share percentages. Total: {}", totalShares);
             return ResponseEntity.badRequest().body("Error: Total percentage shares must equal 100%");
@@ -149,7 +153,7 @@ public class PaymentSplitController {
         StringBuilder result = new StringBuilder();
         result.append(String.format("Total amount: " + CURRENCY_FORMAT + "\nIndividual splits:\n", totalAmount));
 
-        shares.forEach((person, share) -> {
+        sharePercentages.forEach((person, share) -> {
             double amount = totalAmount * (share / 100);
             logger.debug("Calculated share for {}: {}%", person, amount);
             result.append(String.format("%s: " + CURRENCY_FORMAT + " (%.1f%%)\n", 
@@ -175,7 +179,7 @@ public class PaymentSplitController {
     @GetMapping("/per-item")
     public ResponseEntity<String> splitByItems(
             @Parameter(description = "Map of item names to their prices") 
-            @RequestParam Map<String, Double> items,
+            @RequestParam Map<String, String> items,
             @Parameter(description = "List of participant names") 
             @RequestParam List<String> participants,
             @Parameter(description = "Optional tip percentage", example = "15.0") 
@@ -189,7 +193,15 @@ public class PaymentSplitController {
             return ResponseEntity.badRequest().body("Error: Number of participants must be greater than 0");
         }
 
-        double subtotal = items.values().stream().mapToDouble(Double::doubleValue).sum();
+        // Filter out non-item parameters from the request
+        Map<String, Double> itemPrices = items.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals("participants") && !entry.getKey().equals("tipPercentage"))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> Double.parseDouble(entry.getValue())
+            ));
+
+        double subtotal = itemPrices.values().stream().mapToDouble(Double::doubleValue).sum();
         double tipAmount = calculateTipAmount(subtotal, tipPercentage);
         double totalAmount = subtotal + tipAmount;
         double perPersonShare = totalAmount / participants.size();
@@ -198,7 +210,7 @@ public class PaymentSplitController {
             subtotal, tipAmount, totalAmount, perPersonShare);
 
         StringBuilder result = new StringBuilder("Bill Breakdown:\n");
-        items.forEach((item, price) -> 
+        itemPrices.forEach((item, price) -> 
             result.append(String.format("%s: " + CURRENCY_FORMAT + "\n", item, price)));
         
         result.append(String.format("\nSubtotal: " + CURRENCY_FORMAT + "\n", subtotal));
